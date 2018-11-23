@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+//$ ./ss -t 597 -y 90 92 93 108 99 103 104 97 111 115 112 -k 5
+
 char* pertence_string[] = {"SOL", "SIM", "NAO"};
 
 void print_arr(int* arr, int start, int arr_length);
@@ -29,13 +31,21 @@ int main(int argc, char** argv) {
   for (i = 1; i < prms.y_length; ++i) {
     Y[i] = Y[i-1] + prms.y[i];
   }
-  int sols[10];
+  // n-k da a qtd de uns que eu devo ter,
+  // logo, a qtd maxima de solucoes sera
+  // as permutacoes de n k a k
+  int qtd_max_sols = prms.y_length;
+  for (i = 1; i <= prms.k + 1; i++) {
+    qtd_max_sols *= (prms.y_length-i);
+  }
+  int* sols = (int*) malloc(qtd_max_sols * sizeof(int));
   int qtd_folhas = 0;
   int sols_length = 0;
   traverse_tree(sols, &sols_length, prms, 1, Y, &qtd_folhas);
   printf("solucoes: ");
   print_arr(sols, 0, sols_length);
   printf("\nqtd_folhas: %d\n", qtd_folhas);
+  free(sols);
   free(Y);
   free(prms.y);
   return 0;
@@ -81,7 +91,7 @@ int get_all(int id, int* y, int y_length, int k, int t, int* Y) {
 
   int i = int1[0], j = int1[1];
   int Zij1, Zij2;
-  if (j >= y_length) {
+  if (((p-m) > k) || (m>(y_length-k))) { //j > y_length) {
     // p+o eh mais do que tenho
     free(V);
     return 2;
@@ -196,6 +206,7 @@ void traverse_tree(int* sols, int* sols_length, struct Params prms, int id, int*
   printf("**************\npertence: %s\n**************\n", pertence_string[pertence]);
   if (pertence == 0) {
     sols[(*sols_length)++] = id;
+    (*qtd_folhas)++;
   } else if (pertence == 1) {
     traverse_tree(sols, sols_length, prms, id*2, Y, qtd_folhas);
     traverse_tree(sols, sols_length, prms, id*2 + 1, Y, qtd_folhas);
