@@ -1,7 +1,6 @@
 #include <stdio.h>
 
 #include <stdlib.h> // malloc, realloc
-#include <string.h> // memcpy
 #include "ss_helper.h"
 
 char* pertence_string[] = {"SOL", "SIM", "NAO"};
