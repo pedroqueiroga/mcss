@@ -4,6 +4,7 @@
 struct Params {
   int k;
   int t;
+  int id;
   int y_length;
   int* y;
 };

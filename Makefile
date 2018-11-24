@@ -1,27 +1,36 @@
-SDIR =src
-IDIR =include
-CXX = gcc
-CXXFLAGS = -g -Wall -I$(IDIR) -lm
+SRCDIR =src
+INCDIR =include
+BUILDDIR =build
+BINDIR =bin
 
-ODIR=build
+CC = gcc
+CCFLAGS = -g -Wall
+LIBS= -lm
+INC = -I$(INCDIR)
+TARGET = $(BINDIR)/ss
+DBG = -DDEBUGGING
 
-_DEPS= ss_helper.h ss.h
-DEPS= $(patsubst %,$(IDIR)/%,$(_DEPS))
+SRCEXT=c
+SOURCES = $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
+OBJECTS = $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
 
-_OBJ = main.o ss.o ss_helper.o
-OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
+$(TARGET): $(OBJECTS)
+	@echo "Vinculando..."
+	@mkdir -p $(BINDIR)
+	$(CC) -o $@ $^ $(CCFLAGS) $(LIBS)
 
-all: bin/ss
+$(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT) compilando
+	@mkdir -p $(BUILDDIR)
+	$(CC) -c -o $@ $< $(CCFLAGS) $(INC) 
 
-$(OBJ): $(ODIR)/%.o: $(SDIR)/%.c $(DEPS)
-	mkdir -p build
-	$(CXX) -c -o $@ $< $(CXXFLAGS)
-
-.PHONY: clean
+.PHONY: clean compilando
 
 clean:
-	rm -f *~ core $(IDIR)/*~ -r $(ODIR)/ bin/
+	@echo "Limpando..."
+	$(RM) -r $(BUILDDIR)/ $(BINDIR)/
 
-bin/ss: $(OBJ)
-	mkdir -p bin
-	$(CXX) -o $@ $^ $(CXXFLAGS)
+compilando:
+	@echo "Compilando..."
+
+debug:
+	$(CC) -o debug 

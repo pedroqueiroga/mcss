@@ -1,4 +1,7 @@
-#include <stdio.h> // printf
+#ifdef DEBUGGING
+#include <stdio.h> // printf, so usado pra debugar aqui
+#endif
+
 #include <stdlib.h> // malloc
 #include "ss_helper.h"
 
@@ -61,17 +64,17 @@ int get_all(int id, int* y, int y_length, int k, int t, int* Y) {
     Zij2 = Y[j-1];
   }
 
-  printf("Y: ");
+#ifdef DEBUGGING
+  printf("(Y, V, m, o, a, p, ij1, ij2, d, Zij1, Zij2)\n(");
   print_arr(Y, 0, y_length);
-
-  printf("\nV: ");
+  printf(", ");
   print_arr(V, V_index, V_index + p);
-
-  printf("\nm: %d\no: %d\na: %d\np: %d\nint1: ", m, o, a, p);
+  printf(", %d, %d, %d, %d, ", m, o, a, p);
   print_arr(int1, 0, 2);
-  printf("\nint2: ");
+  printf(", ");
   print_arr(int2, 0, 2);
-  printf("\nd: %d\nZij1: %d\nZij2: %d\n", d, Zij1, Zij2);
+  printf(", %d, %d, %d)\n", d, Zij1, Zij2);
+#endif
 
   free(V);
   if (Zij1 == d && d == Zij2 && d == 0) {
@@ -84,13 +87,21 @@ int get_all(int id, int* y, int y_length, int k, int t, int* Y) {
 }
 
 void traverse_tree(int* sols, int* sols_length, struct Params prms, int id, int* Y, int* qtd_folhas) {
+
+#ifdef DEBUGGING
   printf("id: %d\n", id);
   if (id == 0) {
     printf("wtf");
     exit(1);
   }
+#endif
+
   int pertence = get_all(id, prms.y, prms.y_length, prms.k, prms.t, Y);
-  printf("**************\npertence: %s\n**************\n", pertence_string[pertence]);
+
+#ifdef DEBUGGING
+  printf("***************\n pertence: %s \n***************\n", pertence_string[pertence]);
+#endif
+
   if (pertence == 0) {
     sols[(*sols_length)++] = id;
     (*qtd_folhas)++;

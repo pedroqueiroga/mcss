@@ -16,11 +16,15 @@ void print_arr(int* arr, int start, int arr_length) {
 }
 
 struct Params parse_argv(int argc, char** argv) {
-  int i, j, y_length, okk=0,okt=0,oky=0;
+  int i, j, y_length, okk=0,okt=0,oky=0,oki=0;
   struct Params prms;
   for (i = 0; i < argc; ++i) {
     if (argv[i][0] == '-') {
       switch (argv[i][1]) {
+      case 'i':
+	prms.id = atoi(argv[++i]);
+	oki=1;
+	break;
       case 'k':
         prms.k = atoi(argv[++i]);
         okk=1;
@@ -50,14 +54,15 @@ struct Params parse_argv(int argc, char** argv) {
     }
   }
   if (!(okk && okt && oky)) {
-    printf("argumentos:\n-k qtd de zeros\n-t objetivo\n-y vetor separado por espaços\n");
+    printf("argumentos:\n-k qtd de zeros\n-t objetivo\n-y vetor separado por espaços\n[-i id]\n");
     exit(1);
   }
-  printf("k: %d\n", prms.k);
-  printf("t: %d\n", prms.t);
-  printf("y: ");
+  if (!oki) {
+    prms.id = 1;
+  }
+  printf("*** parametros lidos ***\nid: %d\nk: %d\nt: %d\ny: ", prms.id, prms.k, prms.t);
   print_arr(prms.y, 0, prms.y_length);
-  printf("\n");
+  printf("\n---\n");
   return prms;
 }
 
