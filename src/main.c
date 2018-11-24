@@ -37,7 +37,9 @@ int main(int argc, char** argv) {
   printf("FIM\nsolucoes: ");
   print_arr(sols.vec, 0, sols.len);
   printf("\nqtd_folhas: %d\n", qtd_folhas);
-
+#ifdef DEBUGGING
+  printf("sols->cap: %d\nsols->len: %d\n--\n", sols.cap, sols.len);
+#endif
   printf("Tempo decorrido: %lfs\n", time);
 
   free(sols.vec);

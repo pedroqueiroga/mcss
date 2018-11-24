@@ -20,5 +20,6 @@ struct Params parse_argv(int argc, char** argv);
 void quicksort(int* v, int v_length);
 int stirling_approx(int n);
 int perm_rep(int n, int k);
+void vec_expand(struct SimpleVec* sv);
 
 #endif

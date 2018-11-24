@@ -104,21 +104,31 @@ void traverse_tree(struct SimpleVec* sols_vec, struct Params* prms, int id, int*
     sols_vec->vec[(sols_vec->len)++] = id;
     (*qtd_folhas)++;
     // expande o vetor de solucoes
-    if (sols_vec->cap <= sols_vec->len+1) {
-      sols_vec->cap = sols_vec->cap * 2;
-      int* temp = realloc(sols_vec->vec, sols_vec->cap*sizeof(int));
-      if (temp) {
-	sols_vec->vec = temp;
-      } else {
-	free(sols_vec->vec);
-	printf("ERRO REALOCANDO sols_vec->vec!!!");
-	exit(2);
-      }
+    if (sols_vec->cap <= sols_vec->len) {
+      vec_expand(sols_vec);
     }
   } else if (pertence == 1) {
     traverse_tree(sols_vec, prms, id*2, Y, qtd_folhas);
     traverse_tree(sols_vec, prms, id*2 + 1, Y, qtd_folhas);
   } else {
     (*qtd_folhas)++;
+  }
+}
+
+void vec_expand(struct SimpleVec* sv) {
+#ifdef DEBUGGING
+  printf("sv->cap: %d\nsv->len: %d\n", sv->cap, sv->len);
+#endif
+  sv->cap = sv->cap * 2;
+  int* temp = realloc(sv->vec, sv->cap*sizeof(int));
+  if (temp) {
+    sv->vec = temp;
+#ifdef DEBUGGING
+    printf("sv->cap: %d\nsv->len: %d\n--\n", sv->cap, sv->len);
+#endif
+  } else {
+    free(sv->vec);
+    printf("ERRO REALOCANDO sv->vec!!!");
+    exit(2);
   }
 }
