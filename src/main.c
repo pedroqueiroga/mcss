@@ -21,31 +21,26 @@ int main(int argc, char** argv) {
   for (i = 1; i < prms.y_length; ++i) {
     Y[i] = Y[i-1] + prms.y[i];
   }
-  // n-k da a qtd de uns que eu devo ter,
-  // logo, a qtd maxima de solucoes sera
-  // as permutacoes com rep (n!/(k!*(n-k)!))
-  int qtd_max_sols = perm_rep(prms.y_length, prms.k);
-  printf("qtd_max_sols: %d\n", qtd_max_sols);
-  int* sols = (int*) malloc(qtd_max_sols * sizeof(int));
+  struct SimpleVec sols;
+  sols.len = 0; sols.cap = 1; sols.vec = malloc(sols.cap * sizeof(int));
   int qtd_folhas = 0;
-  int sols_length = 0;
   printf("começando busca...\n");
 
   time_t beg, end;
   time(&beg);
 
-  traverse_tree(sols, &sols_length, prms, prms.id, Y, &qtd_folhas);
+  traverse_tree(&sols, &prms, prms.id, Y, &qtd_folhas);
 
   time(&end);
   double time = difftime(beg, end);
 
   printf("FIM\nsolucoes: ");
-  print_arr(sols, 0, sols_length);
+  print_arr(sols.vec, 0, sols.len);
   printf("\nqtd_folhas: %d\n", qtd_folhas);
 
   printf("Tempo decorrido: %lfs\n", time);
 
-  free(sols);
+  free(sols.vec);
   free(Y);
   free(prms.y);
   return 0;

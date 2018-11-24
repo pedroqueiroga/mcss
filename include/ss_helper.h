@@ -9,6 +9,12 @@ struct Params {
   int* y;
 };
 
+struct SimpleVec {
+  int cap;
+  int len;
+  int* vec;
+};
+
 void print_arr(int* arr, int start, int arr_length);
 struct Params parse_argv(int argc, char** argv);
 void quicksort(int* v, int v_length);

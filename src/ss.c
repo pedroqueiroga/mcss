@@ -1,18 +1,17 @@
-#ifdef DEBUGGING
-#include <stdio.h> // printf, so usado pra debugar aqui
-#endif
+#include <stdio.h>
 
-#include <stdlib.h> // malloc
+#include <stdlib.h> // malloc, realloc
+#include <string.h> // memcpy
 #include "ss_helper.h"
 
 char* pertence_string[] = {"SOL", "SIM", "NAO"};
 
 // se for solução, retorna 0. se d pertencer a I, retorna 1, cc 2.
-int get_all(int id, int* y, int y_length, int k, int t, int* Y) {
+int get_all(int id, struct Params* prms, int* Y) {
   int cont;// meu contador
   
-  int* V = (int*) malloc(y_length * sizeof(int));
-  int V_index = y_length;
+  int* V = (int*) malloc(prms->y_length * sizeof(int));
+  int V_index = prms->y_length;
   while (id > 1) {
     --V_index;
     //printf("V_index: %d\n", V_index);
@@ -29,25 +28,25 @@ int get_all(int id, int* y, int y_length, int k, int t, int* Y) {
     free(V);
     return 2;
   }
-  int p = y_length-V_index; // Length[V]
+  int p = prms->y_length-V_index; // Length[V]
   int m = 0; // Total[V]
   for (cont = V_index; cont < V_index + p; ++cont) { 
     m += V[cont];
   }
-  int o = y_length - k - m; // # de uns que faltam
+  int o = prms->y_length - prms->k - m; // # de uns que faltam
   int a = 0; // soma de uns
   for (cont = V_index; cont < V_index + p; ++cont) {
     // cont - V_index vai encaixar o primeiro de y com o primeiro de V
-    a += V[cont]*y[cont-V_index];
+    a += V[cont]*prms->y[cont-V_index];
   }
-  int d = t-a; // desejado
+  int d = prms->t-a; // desejado
   int int1[2], int2[2];
   int1[0] = p+1; int1[1] = p+o;
-  int2[0] = y_length-o+1; int2[1] = y_length;
+  int2[0] = prms->y_length-o+1; int2[1] = prms->y_length;
 
   int i = int1[0], j = int1[1];
   int Zij1, Zij2;
-  if (((p-m) > k) || (m>(y_length-k))) { //j > y_length) {
+  if (((p-m) > prms->k) || (m>(prms->y_length-prms->k))) { //j > prms->y_length) {
     // p+o eh mais do que tenho
     free(V);
     return 2;
@@ -66,7 +65,7 @@ int get_all(int id, int* y, int y_length, int k, int t, int* Y) {
 
 #ifdef DEBUGGING
   printf("(Y, V, m, o, a, p, ij1, ij2, d, Zij1, Zij2)\n(");
-  print_arr(Y, 0, y_length);
+  print_arr(Y, 0, prms->y_length);
   printf(", ");
   print_arr(V, V_index, V_index + p);
   printf(", %d, %d, %d, %d, ", m, o, a, p);
@@ -86,7 +85,7 @@ int get_all(int id, int* y, int y_length, int k, int t, int* Y) {
   }
 }
 
-void traverse_tree(int* sols, int* sols_length, struct Params prms, int id, int* Y, int* qtd_folhas) {
+void traverse_tree(struct SimpleVec* sols_vec, struct Params* prms, int id, int* Y, int* qtd_folhas) {
 
 #ifdef DEBUGGING
   printf("id: %d\n", id);
@@ -96,18 +95,30 @@ void traverse_tree(int* sols, int* sols_length, struct Params prms, int id, int*
   }
 #endif
 
-  int pertence = get_all(id, prms.y, prms.y_length, prms.k, prms.t, Y);
+  int pertence = get_all(id, prms, Y);
 
 #ifdef DEBUGGING
   printf("***************\n pertence: %s \n***************\n", pertence_string[pertence]);
 #endif
 
   if (pertence == 0) {
-    sols[(*sols_length)++] = id;
+    sols_vec->vec[(sols_vec->len)++] = id;
     (*qtd_folhas)++;
+    // expande o vetor de solucoes
+    if (sols_vec->cap <= sols_vec->len+1) {
+      sols_vec->cap = sols_vec->cap * 2;
+      int* temp = realloc(sols_vec->vec, sols_vec->cap*sizeof(int));
+      if (temp) {
+	sols_vec->vec = temp;
+      } else {
+	free(sols_vec->vec);
+	printf("ERRO REALOCANDO sols_vec->vec!!!");
+	exit(2);
+      }
+    }
   } else if (pertence == 1) {
-    traverse_tree(sols, sols_length, prms, id*2, Y, qtd_folhas);
-    traverse_tree(sols, sols_length, prms, id*2 + 1, Y, qtd_folhas);
+    traverse_tree(sols_vec, prms, id*2, Y, qtd_folhas);
+    traverse_tree(sols_vec, prms, id*2 + 1, Y, qtd_folhas);
   } else {
     (*qtd_folhas)++;
   }
