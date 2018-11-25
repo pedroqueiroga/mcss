@@ -9,7 +9,8 @@
 //$ ./ss -t 597 -y 90 92 93 108 99 103 104 97 111 115 112 -k 5
 
 int main(int argc, char** argv) {
-  struct Params prms = parse_argv(argc, argv);
+  int rec = 0;
+  struct Params prms = parse_argv(argc, argv, &rec);
   /*
     int y[] = {90, 92, 93, 97, 99, 103, 104, 108, 111, 112, 115};
     int n = sizeof(y)/sizeof(y[0]);
@@ -23,24 +24,33 @@ int main(int argc, char** argv) {
   }
   struct SimpleVec sols;
   sols.len = 0; sols.cap = 1; sols.vec = malloc(sols.cap * sizeof(int));
+  
   int qtd_folhas = 0;
-  printf("começando busca...\n");
-
   time_t beg, end;
-  time(&beg);
 
-  traverse_tree(&sols, &prms, prms.id, Y, &qtd_folhas);
+  if (rec) {
+    printf("começando busca recursiva...\n");
 
-  time(&end);
-  double time = difftime(beg, end);
+    time(&beg);
 
-  printf("FIM\nsolucoes: ");
+    traverse_tree(&sols, &prms, prms.id, Y, &qtd_folhas);
+
+    time(&end);
+    printf("FIM rec\nsolucoes: ");
+  } else {
+    printf("começando busca iterativa...\n");
+    time(&beg);
+    traverse_tree2(&sols, &prms, Y, &qtd_folhas);
+    time(&end);
+    printf("FIM iter\nsolucoes: ");
+  }    
+  double timer = difftime(beg, end);
   print_arr(sols.vec, 0, sols.len);
   printf("\nqtd_folhas: %d\n", qtd_folhas);
 #ifdef DEBUGGING
   printf("sols->cap: %d\nsols->len: %d\n--\n", sols.cap, sols.len);
 #endif
-  printf("Tempo decorrido: %lfs\n", time);
+  printf("Tempo decorrido: %lfs\n", timer);
 
   free(sols.vec);
   free(Y);

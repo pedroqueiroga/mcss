@@ -94,6 +94,7 @@ void traverse_tree(struct SimpleVec* sols_vec, struct Params* prms, int id, int*
   }
 #endif
 
+
   int pertence = get_all(id, prms, Y);
 
 #ifdef DEBUGGING
@@ -119,4 +120,63 @@ void traverse_tree(struct SimpleVec* sols_vec, struct Params* prms, int id, int*
     printf("qtd_folhas: %d\n", *qtd_folhas);
 #endif
   }
+}
+
+void traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, int* Y, int* qtd_folhas) {
+  int i, id = prms->id;
+  struct SimplePilha pilha;
+  pilha.len = 0; pilha.cap = 1; pilha.vec = malloc(sizeof(struct ElementoPilha));
+  do {
+#ifdef DEBUGGING
+    printf("id: %d\n", id);
+    if (id == 0) {
+      printf("wtf");
+      exit(1);
+    }
+#endif
+    int pertence = get_all(id, prms, Y);
+    switch (pertence) {
+    case 1:
+      pilha.vec[pilha.len].acc=0;
+      pilha.vec[pilha.len++].id=id;
+      if (pilha.cap <= pilha.len) {
+	pilha_expand(&pilha);
+      }
+      id = pilha.vec[pilha.len-1].id * 2;
+      break;
+    case 0:
+      sols_vec->vec[(sols_vec->len)++] = id;
+#ifdef DEBUGGING
+      printf("qtd_folhas: %d\n", *qtd_folhas);
+#endif
+      // expande o vetor de solucoes
+      if (sols_vec->cap <= sols_vec->len) {
+	vec_expand(sols_vec);
+      }
+    case 2:
+      pilha.vec[pilha.len].acc=1;
+      pilha.vec[pilha.len++].id=id;
+      if (pilha.cap <= pilha.len) {
+	pilha_expand(&pilha);
+      }
+      (*qtd_folhas)++;
+      id = pilha.vec[pilha.len-1].id + 1;
+      while (pilha.len > 1) {
+	i = pilha.len-1;
+	if (pilha.vec[i].acc != 0 && pilha.vec[i-1].acc != 0) {
+	  pilha.vec[i-2].acc = pilha.vec[i].acc + pilha.vec[i-1].acc;
+	  pilha.len -= 2;
+	} else break;
+      }
+      // TODO contrair pilha
+      id = pilha.vec[pilha.len-1].id + 1;
+      break;
+    }
+#ifdef DEBUGGING
+    printf("pilha: ");
+    print_pilha(&pilha);
+    printf("\n");
+#endif
+  } while(pilha.vec[0].acc == 0);
+  free(pilha.vec);
 }

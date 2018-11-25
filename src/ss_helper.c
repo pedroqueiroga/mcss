@@ -15,12 +15,28 @@ void print_arr(int* arr, int start, int arr_length) {
   printf(")");  
 }
 
-struct Params parse_argv(int argc, char** argv) {
+void print_pilha(struct SimplePilha* pilha) {
+  printf("(");
+  int i;
+  for (i = 0; i < pilha->len; ++i) {
+    printf("(%d, %d)", pilha->vec[i].id, pilha->vec[i].acc);
+    if (i != pilha->len-1) {
+      printf(", ");
+    }
+  }
+  printf(")");  
+  
+}
+
+struct Params parse_argv(int argc, char** argv, int* rec) {
   int i, j, y_length, okk=0,okt=0,oky=0,oki=0;
   struct Params prms;
   for (i = 0; i < argc; ++i) {
     if (argv[i][0] == '-') {
       switch (argv[i][1]) {
+      case 'r':
+	*rec = 1;
+	break;
       case 'i':
 	prms.id = atoi(argv[++i]);
 	oki=1;
@@ -98,4 +114,23 @@ void vec_expand(struct SimpleVec* sv) {
     printf("ERRO REALOCANDO sv->vec!!!");
     exit(2);
   }
+}
+
+void pilha_expand(struct SimplePilha* sp) {
+#ifdef DEBUGGING
+  printf("sp->cap: %d\nsp->len: %d\n", sp->cap, sp->len);
+#endif
+  sp->cap = sp->cap * 2;
+  struct ElementoPilha* temp = realloc(sp->vec, sp->cap*sizeof(struct ElementoPilha));
+  if (temp) {
+    sp->vec = temp;
+#ifdef DEBUGGING
+    printf("sp->cap: %d\nsp->len: %d\n--\n", sp->cap, sp->len);
+#endif
+  } else {
+    free(sp->vec);
+    printf("ERRO REALOCANDO sp->vec!!!");
+    exit(2);
+  }
+
 }

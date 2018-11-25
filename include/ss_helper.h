@@ -15,11 +15,24 @@ struct SimpleVec {
   int* vec;
 };
 
+struct ElementoPilha {
+  int id;
+  int acc;
+};
+
+struct SimplePilha {
+  int cap;
+  int len;
+  struct ElementoPilha* vec;
+};
+
 void print_arr(int* arr, int start, int arr_length);
-struct Params parse_argv(int argc, char** argv);
+void print_pilha(struct SimplePilha* pilha);
+struct Params parse_argv(int argc, char** argv, int* rec);
 void quicksort(int* v, int v_length);
 int stirling_approx(int n);
 int perm_rep(int n, int k);
 void vec_expand(struct SimpleVec* sv);
+void pilha_expand(struct SimplePilha* sp);
 
 #endif
