@@ -103,6 +103,9 @@ void traverse_tree(struct SimpleVec* sols_vec, struct Params* prms, int id, int*
   if (pertence == 0) {
     sols_vec->vec[(sols_vec->len)++] = id;
     (*qtd_folhas)++;
+#ifdef DEBUGGING
+    printf("qtd_folhas: %d\n", *qtd_folhas);
+#endif
     // expande o vetor de solucoes
     if (sols_vec->cap <= sols_vec->len) {
       vec_expand(sols_vec);
@@ -112,23 +115,8 @@ void traverse_tree(struct SimpleVec* sols_vec, struct Params* prms, int id, int*
     traverse_tree(sols_vec, prms, id*2 + 1, Y, qtd_folhas);
   } else {
     (*qtd_folhas)++;
-  }
-}
-
-void vec_expand(struct SimpleVec* sv) {
 #ifdef DEBUGGING
-  printf("sv->cap: %d\nsv->len: %d\n", sv->cap, sv->len);
+    printf("qtd_folhas: %d\n", *qtd_folhas);
 #endif
-  sv->cap = sv->cap * 2;
-  int* temp = realloc(sv->vec, sv->cap*sizeof(int));
-  if (temp) {
-    sv->vec = temp;
-#ifdef DEBUGGING
-    printf("sv->cap: %d\nsv->len: %d\n--\n", sv->cap, sv->len);
-#endif
-  } else {
-    free(sv->vec);
-    printf("ERRO REALOCANDO sv->vec!!!");
-    exit(2);
   }
 }

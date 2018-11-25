@@ -21,7 +21,7 @@ $(TARGET): $(OBJECTS)
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT) compilando
 	@mkdir -p $(BUILDDIR)
-	$(CC) -c -o $@ $< $(CCFLAGS) $(INC) # $(DBG)
+	$(CC) -c -o $@ $< $(CCFLAGS) $(INC)  $(DBG)
 
 .PHONY: clean compilando
 

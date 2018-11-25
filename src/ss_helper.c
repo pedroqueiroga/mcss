@@ -81,3 +81,21 @@ int stirling_approx(int n) {
 int perm_rep(int n, int k) {
   return stirling_approx(n)/(stirling_approx(n-k)*stirling_approx(k));
 }
+
+void vec_expand(struct SimpleVec* sv) {
+#ifdef DEBUGGING
+  printf("sv->cap: %d\nsv->len: %d\n", sv->cap, sv->len);
+#endif
+  sv->cap = sv->cap * 2;
+  int* temp = realloc(sv->vec, sv->cap*sizeof(int));
+  if (temp) {
+    sv->vec = temp;
+#ifdef DEBUGGING
+    printf("sv->cap: %d\nsv->len: %d\n--\n", sv->cap, sv->len);
+#endif
+  } else {
+    free(sv->vec);
+    printf("ERRO REALOCANDO sv->vec!!!");
+    exit(2);
+  }
+}
