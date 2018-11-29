@@ -25,32 +25,34 @@ int main(int argc, char** argv) {
   sols.len = 0; sols.cap = 1; sols.vec = malloc(sols.cap * sizeof(int));
   
   int qtd_folhas = 0;
-  time_t beg, end;
-
+  struct timespec beg = {0,0}, end = {0,0};
   if (rec) {
     printf("começando busca recursiva...\n");
 
-    time(&beg);
-
+    clock_gettime(CLOCK_MONOTONIC, &beg);
+  
     traverse_tree(&sols, &prms, prms.id, Y, &qtd_folhas);
 
-    time(&end);
+    clock_gettime(CLOCK_MONOTONIC, &end);
     printf("FIM rec\nsolucoes: ");
   } else {
     printf("começando busca iterativa...\n");
-    time(&beg);
+    clock_gettime(CLOCK_MONOTONIC, &beg);
+
     traverse_tree2(&sols, &prms, Y, &qtd_folhas);
-    time(&end);
+
+    clock_gettime(CLOCK_MONOTONIC, &end);
     printf("FIM iter\nsolucoes: ");
   }    
-  double timer = difftime(beg, end);
   print_arr(sols.vec, 0, sols.len);
   printf("\nqtd_folhas: %d\n", qtd_folhas);
 #ifdef DEBUGGING
   printf("sols->cap: %d\nsols->len: %d\n--\n", sols.cap, sols.len);
 #endif
-  printf("Tempo decorrido: %lfs\n", timer);
-
+  printf("Tempo decorrido: %.5fs\n",
+	 ((double)end.tv_sec + 1.0e-9*end.tv_nsec) - 
+	 ((double)beg.tv_sec + 1.0e-9*beg.tv_nsec));
+  
   free(sols.vec);
   free(Y);
   free(prms.y);
