@@ -1,6 +1,5 @@
 #include <stdio.h> // printf
-#include <stdlib.h> // memoria, quicksort
-#include <math.h> // PI, euler, sqrt, pow
+#include <stdlib.h> // memoria
 #include "ss.h"
 #include "ss_helper.h"
 
