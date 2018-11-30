@@ -130,13 +130,13 @@ void traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, int* Y, int
   pilha.len = 0; pilha.cap = 1; pilha.vec = malloc(sizeof(struct ElementoPilha));
 
 #ifdef GRAPHTREE
-  char filename[50];
+  char filename[100], noext_filename[100];
   int mkdir_status = mkdir("draw", S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH); // rwxr-xr-x
   if (mkdir_status == -1) {
     printf("Erro ao tentar criar draw/\n  %s\n", strerror(errno));
   }
-  strcpy(filename, "draw/tree");
-  sprintf(filename, "%s%d.tex", filename, id);
+  sprintf(noext_filename, "tree_id%d_t%d_k%d", id, prms->t, prms->k);
+  sprintf(filename, "draw/%s.tex", noext_filename);
   printf("escrevendo em %s\n", filename);
   FILE *pilhatex;
   pilhatex = fopen(filename, "w");
@@ -236,6 +236,23 @@ void traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, int* Y, int
   fprintf(pilhatex, "\n\\end{forest}\n" \
 	  "\\end{document}\n");
   fclose(pilhatex);
+
+  char awk_comm[200];
+  sprintf(awk_comm, \
+	  "awk '{sub(/\\[%d/, \"[{%d, %d}\")} 1' %s > tmp && mv tmp %s", \
+	  prms->id, prms->id, *qtd_folhas, filename, filename \
+	  );
+  int sys_ret = system(awk_comm);
+  if (sys_ret == -1) {
+    printf("nao tem awk? nao foi possivel colocar a qtd de folhas na raiz da arvore.");
+  }
+
+  char stitch_together[200];
+  sprintf(stitch_together, "cd draw && pdflatex %s.tex >/dev/null 2>&1 && rm %s.aux && xdg-open %s.pdf >/dev/null 2>&1 &", noext_filename, noext_filename, noext_filename);
+  sys_ret = system(stitch_together);
+  if (sys_ret == -1) {
+    printf("arquivo latex gerado em %s\n", filename);
+  }
 #endif
 
   free(pilha.vec);
