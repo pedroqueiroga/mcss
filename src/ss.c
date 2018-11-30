@@ -1,7 +1,9 @@
 #include <stdio.h>
-
+#include <string.h> // strcpy, strcat
 #include <stdlib.h> // malloc, realloc
 #include "ss_helper.h"
+#include <sys/stat.h>
+#include <errno.h>
 
 char* pertence_string[] = {"SOL", "SIM", "NAO"};
 
@@ -126,15 +128,49 @@ void traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, int* Y, int
   int i, id = prms->id;
   struct SimplePilha pilha;
   pilha.len = 0; pilha.cap = 1; pilha.vec = malloc(sizeof(struct ElementoPilha));
+
+#ifdef GRAPHTREE
+  char filename[50];
+  int mkdir_status = mkdir("draw", S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH); // rwxr-xr-x
+  if (mkdir_status == -1) {
+    printf("Erro ao tentar criar draw/\n  %s\n", strerror(errno));
+  }
+  strcpy(filename, "draw/tree");
+  sprintf(filename, "%s%d.tex", filename, id);
+  printf("escrevendo em %s\n", filename);
+  FILE *pilhatex;
+  pilhatex = fopen(filename, "w");
+  if (pilhatex == NULL) {
+    printf("nao consegui abrir %s\n  %s", filename, strerror(errno));
+    exit(1);
+  }
+  // escreve o cabecalho do tex:
+  fprintf(pilhatex, \
+	  "\\documentclass[margin=3mm]{standalone}\n" \
+	  "\\usepackage[edges]{forest}\n\n"	      \
+	  
+	  "\\begin{document}\n"			\
+	  "  \\begin{forest}\n"			\
+	  "    for tree={\n"			\
+	  "      grow=south,\n"			\
+	  "      draw,\n"				\
+	  "      inner sep=1pt,\n"			\
+	  "      s sep=7mm\n"				\
+	  "    }\n");
+#endif  
   do {
 #ifdef DEBUGGING
     printf("id: %d\n", id);
     if (id == 0) {
       printf("wtf");
+      fclose(pilhatex);
       exit(1);
     }
 #endif
     int pertence = get_all(id, prms, Y);
+#ifdef GRAPHTREE
+    fprintf(pilhatex, "[%d", id);
+#endif
     switch (pertence) {
     case 1:
       pilha.vec[pilha.len].acc=0;
@@ -143,6 +179,7 @@ void traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, int* Y, int
 	pilha_expand(&pilha);
       }
       id = pilha.vec[pilha.len-1].id * 2;
+
       break;
     case 0:
       sols_vec->vec[(sols_vec->len)++] = id;
@@ -153,17 +190,29 @@ void traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, int* Y, int
       if (sols_vec->cap <= sols_vec->len) {
 	vec_expand(sols_vec);
       }
+
+#ifdef GRAPHTREE
+      fprintf(pilhatex, ",fill=teal");
+#endif
     case 2:
       pilha.vec[pilha.len].acc=1;
       pilha.vec[pilha.len++].id=id;
       
+#ifdef GRAPHTREE
+      fprintf(pilhatex, ",draw=red]");
+#endif
+
       (*qtd_folhas)++;
-      //id = pilha.vec[pilha.len-1].id + 1;
       while (pilha.len > 1) {
 	i = pilha.len-1;
 	if (pilha.vec[i].acc != 0 && pilha.vec[i-1].acc != 0) {
 	  pilha.vec[i-2].acc = pilha.vec[i].acc + pilha.vec[i-1].acc;
 	  pilha.len -= 2;
+
+#ifdef GRAPHTREE
+	  fprintf(pilhatex, "]");
+#endif
+
 	} else break;
       }
       if (pilha.cap <= pilha.len) {
@@ -171,13 +220,23 @@ void traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, int* Y, int
       }
       // TODO contrair pilha
       id = pilha.vec[pilha.len-1].id + 1;
-      //#ifdef SHOWPILHA
+
+#ifdef SHOWPILHA
+      printf("pilha: ");
       print_pilha(&pilha);
       if (pilha.vec[0].acc == 0) printf(" %d", id);
       printf("\n");
-      //#endif
+#endif
+
       break;
     }
   } while(pilha.vec[0].acc == 0);
+
+#ifdef GRAPHTREE
+  fprintf(pilhatex, "\n\\end{forest}\n" \
+	  "\\end{document}\n");
+  fclose(pilhatex);
+#endif
+
   free(pilha.vec);
 }

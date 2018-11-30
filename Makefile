@@ -9,6 +9,8 @@ LIBS= -lm
 INC = -I$(INCDIR)
 TARGET = $(BINDIR)/ss
 DBG = -DDEBUGGING
+TREE = -DGRAPHTREE
+SHPI = -DSHOWPILHA
 
 SRCEXT=c
 SOURCES = $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
@@ -21,7 +23,7 @@ $(TARGET): $(OBJECTS)
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT) compilando
 	@mkdir -p $(BUILDDIR)
-	$(CC) -c -o $@ $< $(CCFLAGS) $(INC) # $(DBG)
+	$(CC) -c -o $@ $< $(CCFLAGS) $(INC) $(TREE) # $(SHPI) # $(DBG)
 
 .PHONY: clean compilando
 
