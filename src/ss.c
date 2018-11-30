@@ -156,11 +156,9 @@ void traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, int* Y, int
     case 2:
       pilha.vec[pilha.len].acc=1;
       pilha.vec[pilha.len++].id=id;
-      if (pilha.cap <= pilha.len) {
-	pilha_expand(&pilha);
-      }
+      
       (*qtd_folhas)++;
-      id = pilha.vec[pilha.len-1].id + 1;
+      //id = pilha.vec[pilha.len-1].id + 1;
       while (pilha.len > 1) {
 	i = pilha.len-1;
 	if (pilha.vec[i].acc != 0 && pilha.vec[i-1].acc != 0) {
@@ -168,15 +166,18 @@ void traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, int* Y, int
 	  pilha.len -= 2;
 	} else break;
       }
+      if (pilha.cap <= pilha.len) {
+	pilha_expand(&pilha);
+      }
       // TODO contrair pilha
       id = pilha.vec[pilha.len-1].id + 1;
+      //#ifdef SHOWPILHA
+      print_pilha(&pilha);
+      if (pilha.vec[0].acc == 0) printf(" %d", id);
+      printf("\n");
+      //#endif
       break;
     }
-#ifdef DEBUGGING
-    printf("pilha: ");
-    print_pilha(&pilha);
-    printf("\n");
-#endif
   } while(pilha.vec[0].acc == 0);
   free(pilha.vec);
 }
