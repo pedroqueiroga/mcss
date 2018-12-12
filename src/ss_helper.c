@@ -1,7 +1,21 @@
 #include <math.h> //pi, euler, round, pow, sqrt
 #include <stdio.h> // printf
 #include <stdlib.h> // atoi, malloc, qsort
+#include <float.h> // DBL_MAX
 #include "ss_helper.h"
+#include <errno.h>
+#include <string.h> // strerror
+
+#define ARQUIVO_FORMATO "Formato:\n"            \
+  "n\n"                                         \
+  "y1 y2 y3 ... yn\n"                           \
+  "t\n"                                         \
+  "k\n"                                         \
+  "EOF\n"                                       \
+  "\nn: inteiro; "                              \
+  "yi: racional; "                              \
+  "t: inteiro; "                                \
+  "k: inteiro\n"
 
 void print_arr(int* arr, int start, int arr_length) {
   printf("(");
@@ -14,7 +28,17 @@ void print_arr(int* arr, int start, int arr_length) {
   }
   printf(")");  
 }
-
+void print_arrd(double* arr, int start, int arr_length) {
+  printf("(");
+  int i;
+  for (i = start; i < arr_length; ++i) {
+    printf("%lf", arr[i]);
+    if (i != arr_length-1) {
+      printf(", ");
+    }
+  }
+  printf(")");
+}
 void print_pilha(struct SimplePilha* pilha) {
   printf("(");
   int i;
@@ -27,20 +51,88 @@ void print_pilha(struct SimplePilha* pilha) {
   printf(")");  
   
 }
+struct Params parse_argv(int argc, char** argv) {
+  struct Params prms;
+  if (argc != 4 && argc != 2) {
+    printf("ss arquivo [-id id]\n");
+    printf(ARQUIVO_FORMATO);
+    exit(1);
+  }
+  if (argc == 4) {
+    if (strcmp(argv[2], "-id") == 0) {
+      prms.id = atoi(argv[3]);
+    } else {
+      printf("ss arquivo [-id id]\n");
+      printf(ARQUIVO_FORMATO);
+      exit(1);
+    }
+  } else {
+    prms.id = 1;
+  }
+  FILE* input_file = fopen(argv[1], "r");
+  if (input_file == NULL) {
+    printf("%s\n", strerror(errno));
+    exit(1);
+  }
+  int scan_ok;
+  scan_ok = fscanf(input_file, "%d", &prms.y_length);
+  if (scan_ok != 1) {
+    printf("Cheque o formato do arquivo providenciado." \
+           "\n");
+    printf(ARQUIVO_FORMATO);
+    exit(1);
+  }
+  prms.y = malloc(prms.y_length*sizeof(double));
+  if (prms.y == NULL) {
+    printf("Erro ao alocar memória para o vetor y.\n");
+    exit(1);
+  }
+  int i;
+  for (i = 0; i < prms.y_length; i++) {
+    scan_ok = fscanf(input_file, "%lf", &prms.y[i]);
+    if (scan_ok != 1) {
+      printf("Cheque o formato do arquivo providenciado.");
+      printf(ARQUIVO_FORMATO);
+      exit(1);
+    }
+  }
+  quicksort(prms.y, prms.y_length);
+  printf("\n");
+  scan_ok = fscanf(input_file, "%d", &prms.t);
+  if (scan_ok != 1) {
+    printf("Cheque o formato do arquivo providenciado.");
+    printf(ARQUIVO_FORMATO);
+    exit(1);
+  }
 
-struct Params parse_argv(int argc, char** argv, int* rec) {
+  scan_ok = fscanf(input_file, "%d", &prms.k);
+  if (scan_ok != 1) {
+    printf("Cheque o formato do arquivo providenciado.");
+    printf(ARQUIVO_FORMATO);
+    exit(1);
+  }
+
+  fclose(input_file);
+  printf("*** parametros lidos ***\nid: %d\nk: %d\nt: %d\ny: ", prms.id, prms.k, prms.t);
+  print_arrd(prms.y, 0, prms.y_length);
+  printf("\n---\n");
+  return prms;
+}
+
+// depreciado
+struct Params parse_argv2(int argc, char** argv, int* rec) {
   int i, j, y_length, okk=0,okt=0,oky=0,oki=0;
   struct Params prms;
   for (i = 0; i < argc; ++i) {
     if (argv[i][0] == '-') {
       switch (argv[i][1]) {
       case 'r':
-	*rec = 1;
-	break;
+        *rec = 1;
+        break;
       case 'i':
-	prms.id = atoi(argv[++i]);
-	oki=1;
-	break;
+        prms.id = atoi(argv[++i]);
+        oki=1;
+        break;
       case 'k':
         prms.k = atoi(argv[++i]);
         okk=1;
@@ -55,7 +147,7 @@ struct Params parse_argv(int argc, char** argv, int* rec) {
           y_length++;
         }
         prms.y_length = y_length;
-        prms.y = (int*) malloc(y_length*sizeof(int));
+        prms.y = malloc(y_length*sizeof(int));
         for (j = i+1; j < argc && argv[j][0] != '-'; ++j) {
           prms.y[j-(i+1)] = atoi(argv[j]);
         }
@@ -77,17 +169,17 @@ struct Params parse_argv(int argc, char** argv, int* rec) {
     prms.id = 1;
   }
   printf("*** parametros lidos ***\nid: %d\nk: %d\nt: %d\ny: ", prms.id, prms.k, prms.t);
-  print_arr(prms.y, 0, prms.y_length);
+  print_arrd(prms.y, 0, prms.y_length);
   printf("\n---\n");
   return prms;
 }
 
 int mycompare(const void* a, const void* b) {
-  return ((* (int*) a) - (* (int*) b));
+  return ((* (double*) a) - (* (double*) b));
 }
 
-void quicksort(int* v, int v_length) {
-  qsort(v, v_length, sizeof(int), mycompare);
+void quicksort(double* v, int v_length) {
+  qsort(v, v_length, sizeof(double), mycompare);
 }
 
 int stirling_approx(int n) {
@@ -132,5 +224,26 @@ void pilha_expand(struct SimplePilha* sp) {
     printf("ERRO REALOCANDO sp->vec!!!");
     exit(2);
   }
+}
 
+int nearlyEqual(double a, double b) {
+  double A = fabs(a);
+  double B = fabs(b);
+  double diff = fabs(a - b);
+
+  if (a == b) { // shortcut, handles infinities
+    return 1;
+  } else if (a == 0 || b == 0 || diff < DBL_MIN) {
+    // a or b is zero or both are extremely close to it
+    // relative error is less meaningful here
+    return diff < (DBL_EPSILON * DBL_MIN);
+  } else { // use relative error
+    return diff / min((A + B), DBL_MAX) < DBL_EPSILON;
+  }
+}
+
+double min(double a, double b) {
+  if (a < b)
+    return a;
+  return b;
 }

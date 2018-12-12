@@ -1,17 +1,19 @@
 #include <stdio.h>
-#include <string.h> // strcpy, strcat
+#include <string.h> // strcpy, strcat, strerror
 #include <stdlib.h> // malloc, realloc
 #include "ss_helper.h"
+#include "ss.h"
 #include <sys/stat.h>
 #include <errno.h>
+#include <time.h>
 
 char* pertence_string[] = {"SOL", "SIM", "NAO"};
 
 // se for solução, retorna 0. se d pertencer a I, retorna 1, cc 2.
-int get_all(int id, struct Params* prms, int* Y) {
+int get_all(int id, struct Params* prms, double* Y) {
   int cont;// meu contador
   
-  int* V = (int*) malloc(prms->y_length * sizeof(int));
+  int* V = malloc(prms->y_length * sizeof(int));
   int V_index = prms->y_length;
   while (id > 1) {
     --V_index;
@@ -46,7 +48,7 @@ int get_all(int id, struct Params* prms, int* Y) {
   int2[0] = prms->y_length-o+1; int2[1] = prms->y_length;
 
   int i = int1[0], j = int1[1];
-  int Zij1, Zij2;
+  double Zij1, Zij2;
   if (((p-m) > prms->k) || (m>(prms->y_length-prms->k))) { //j > prms->y_length) {
     // p+o eh mais do que tenho
     free(V);
@@ -77,16 +79,19 @@ int get_all(int id, struct Params* prms, int* Y) {
 #endif
 
   free(V);
-  if (Zij1 == d && d == Zij2 && d == 0) {
+  if (nearlyEqual(Zij1, d) && nearlyEqual(d, Zij2) && nearlyEqual(d, 0)) {
+    // zij1 = d = zij2 = 0
     return 0;
-  } else if (Zij1 <= d && d <= Zij2) {
+  } else if ((nearlyEqual(Zij1,d) || Zij1 < d) && (nearlyEqual(d, Zij2) || d < Zij2)) {
+    // zij1 <= d AND d <= zij2
     return 1;
   } else {
     return 2;
   }
 }
 
-void traverse_tree(struct SimpleVec* sols_vec, struct Params* prms, int id, int* Y, int* qtd_folhas) {
+// depreciado
+void traverse_tree(struct SimpleVec* sols_vec, struct Params* prms, int id, double* Y, int* qtd_folhas) {
 
 #ifdef DEBUGGING
   printf("id: %d\n", id);
@@ -124,7 +129,7 @@ void traverse_tree(struct SimpleVec* sols_vec, struct Params* prms, int id, int*
   }
 }
 
-void traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, int* Y, int* qtd_folhas) {
+double traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, double* Y, int* qtd_folhas) {
   int i, id = prms->id;
   struct SimplePilha pilha;
   pilha.len = 0; pilha.cap = 1; pilha.vec = malloc(sizeof(struct ElementoPilha));
@@ -133,7 +138,8 @@ void traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, int* Y, int
   char filename[100], noext_filename[100];
   int mkdir_status = mkdir("draw", S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH); // rwxr-xr-x
   if (mkdir_status == -1) {
-    printf("Erro ao tentar criar draw/\n  %s\n", strerror(errno));
+    if (errno != EEXIST)
+      printf("Erro ao tentar criar draw/\n  %s\n", strerror(errno));
   }
   sprintf(noext_filename, "tree_id%d_t%d_k%d", id, prms->t, prms->k);
   sprintf(filename, "draw/%s.tex", noext_filename);
@@ -146,18 +152,23 @@ void traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, int* Y, int
   }
   // escreve o cabecalho do tex:
   fprintf(pilhatex, \
-	  "\\documentclass[margin=3mm]{standalone}\n" \
-	  "\\usepackage[edges]{forest}\n\n"	      \
-	  
-	  "\\begin{document}\n"			\
-	  "  \\begin{forest}\n"			\
-	  "    for tree={\n"			\
-	  "      grow=south,\n"			\
-	  "      draw,\n"				\
-	  "      inner sep=1pt,\n"			\
-	  "      s sep=7mm\n"				\
-	  "    }\n");
-#endif  
+          "\\documentclass[margin=3mm]{standalone}\n" \
+          "\\usepackage[edges]{forest}\n\n"           \
+          
+          "\\begin{document}\n"                 \
+          "  \\begin{forest}\n"                 \
+          "    for tree={\n"                    \
+          "      grow=south,\n"                 \
+          "      draw,\n"                               \
+          "      inner sep=1pt,\n"                      \
+          "      s sep=7mm\n"                           \
+          "    }\n");
+#endif
+
+  // calculando tempo de execucao do algoritmo
+  struct timespec beg = {0,0}, end = {0,0};
+  clock_gettime(CLOCK_MONOTONIC, &beg);
+
   do {
 #ifdef DEBUGGING
     printf("id: %d\n", id);
@@ -171,12 +182,13 @@ void traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, int* Y, int
 #ifdef GRAPHTREE
     fprintf(pilhatex, "[%d", id);
 #endif
+    
     switch (pertence) {
     case 1:
       pilha.vec[pilha.len].acc=0;
       pilha.vec[pilha.len++].id=id;
       if (pilha.cap <= pilha.len) {
-	pilha_expand(&pilha);
+        pilha_expand(&pilha);
       }
       id = pilha.vec[pilha.len-1].id * 2;
 
@@ -188,7 +200,7 @@ void traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, int* Y, int
 #endif
       // expande o vetor de solucoes
       if (sols_vec->cap <= sols_vec->len) {
-	vec_expand(sols_vec);
+        vec_expand(sols_vec);
       }
 
 #ifdef GRAPHTREE
@@ -204,19 +216,19 @@ void traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, int* Y, int
 
       (*qtd_folhas)++;
       while (pilha.len > 1) {
-	i = pilha.len-1;
-	if (pilha.vec[i].acc != 0 && pilha.vec[i-1].acc != 0) {
-	  pilha.vec[i-2].acc = pilha.vec[i].acc + pilha.vec[i-1].acc;
-	  pilha.len -= 2;
+        i = pilha.len-1;
+        if (pilha.vec[i].acc != 0 && pilha.vec[i-1].acc != 0) {
+          pilha.vec[i-2].acc = pilha.vec[i].acc + pilha.vec[i-1].acc;
+          pilha.len -= 2;
 
 #ifdef GRAPHTREE
-	  fprintf(pilhatex, "]");
+          fprintf(pilhatex, "]");
 #endif
 
-	} else break;
+        } else break;
       }
       if (pilha.cap <= pilha.len) {
-	pilha_expand(&pilha);
+        pilha_expand(&pilha);
       }
       // TODO contrair pilha
       id = pilha.vec[pilha.len-1].id + 1;
@@ -231,24 +243,27 @@ void traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, int* Y, int
       break;
     }
   } while(pilha.vec[0].acc == 0);
-
+  // fim da execucao do algoritmo
+  clock_gettime(CLOCK_MONOTONIC, &end);
+  double tempo_decorrido = ((double) end.tv_sec + 1.0e-9*end.tv_nsec) - ((double)beg.tv_sec + 1.0e-9*beg.tv_nsec);
+  
 #ifdef GRAPHTREE
   fprintf(pilhatex, "\n\\end{forest}\n" \
-	  "\\end{document}\n");
+          "\\end{document}\n");
   fclose(pilhatex);
 
   char awk_comm[200];
   sprintf(awk_comm, \
-	  "awk '{sub(/\\[%d/, \"[{%d, %d}\")} 1' %s > tmp && mv tmp %s", \
-	  prms->id, prms->id, *qtd_folhas, filename, filename \
-	  );
+          "awk '{sub(/\\[%d/, \"[{%d, %d}\")} 1' %s > tmp && mv tmp %s", \
+          prms->id, prms->id, *qtd_folhas, filename, filename \
+          );
   int sys_ret = system(awk_comm);
   if (sys_ret == -1) {
     printf("nao tem awk? nao foi possivel colocar a qtd de folhas na raiz da arvore.");
   }
 
-  char stitch_together[200];
-  sprintf(stitch_together, "cd draw && pdflatex %s.tex >/dev/null 2>&1 && rm %s.aux && xdg-open %s.pdf >/dev/null 2>&1 &", noext_filename, noext_filename, noext_filename);
+  char stitch_together[500];
+  sprintf(stitch_together, "cd draw; pdflatex -interaction=batchmode %s.tex && rm %s.aux && xdg-open %s.pdf >/dev/null 2>&1 && echo OK!", noext_filename, noext_filename, noext_filename);
   sys_ret = system(stitch_together);
   if (sys_ret == -1) {
     printf("arquivo latex gerado em %s\n", filename);
@@ -256,4 +271,5 @@ void traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, int* Y, int
 #endif
 
   free(pilha.vec);
+  return tempo_decorrido;
 }

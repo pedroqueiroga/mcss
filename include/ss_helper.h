@@ -6,7 +6,7 @@ struct Params {
   int t;
   int id;
   int y_length;
-  int* y;
+  double* y;
 };
 
 struct SimpleVec {
@@ -27,12 +27,16 @@ struct SimplePilha {
 };
 
 void print_arr(int* arr, int start, int arr_length);
+void print_arrd(double* arr, int start, int arr_length);
 void print_pilha(struct SimplePilha* pilha);
-struct Params parse_argv(int argc, char** argv, int* rec);
-void quicksort(int* v, int v_length);
+struct Params parse_argv(int argc, char** argv);
+struct Params parse_argv2(int argc, char** argv, int* rec);
+void quicksort(double* v, int v_length);
 int stirling_approx(int n);
 int perm_rep(int n, int k);
 void vec_expand(struct SimpleVec* sv);
 void pilha_expand(struct SimplePilha* sp);
+int nearlyEqual(double a, double b);
+double min(double a, double b);
 
 #endif
