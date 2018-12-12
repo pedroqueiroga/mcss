@@ -6,6 +6,12 @@
 #include <errno.h>
 #include <string.h> // strerror
 
+#define COMO_USAR "ss arquivo [-id id] [-c] [-h]\n"          \
+  "-id id: começar a busca a partir de id. "                 \
+  "default: 1\n"                                             \
+  "-c: compila e mostra o arquivo tex da arvore\n"           \
+  "-h: help\n"
+  
 #define ARQUIVO_FORMATO "Formato:\n"            \
   "n\n"                                         \
   "y1 y2 y3 ... yn\n"                           \
@@ -51,24 +57,42 @@ void print_pilha(struct SimplePilha* pilha) {
   printf(")");  
   
 }
-struct Params parse_argv(int argc, char** argv) {
+struct Params parse_argv(int argc, char** argv, int* compile) {
   struct Params prms;
-  if (argc != 4 && argc != 2) {
-    printf("ss arquivo [-id id]\n");
+  if (argc == 1) {
+    printf(COMO_USAR);
     printf(ARQUIVO_FORMATO);
     exit(1);
   }
-  if (argc == 4) {
-    if (strcmp(argv[2], "-id") == 0) {
-      prms.id = atoi(argv[3]);
-    } else {
-      printf("ss arquivo [-id id]\n");
+
+  int i, oki = 0;
+  for (i = 2; i < argc; i++) {
+    if (strcmp(argv[i], "-id") == 0) {
+      if (argc <= i+1) {
+        printf(COMO_USAR);
+        exit(1);
+      }
+      prms.id = atoi(argv[++i]);
+      oki = 1;
+    } else if (strcmp(argv[i], "-c") == 0) {
+      *compile = 1;
+    } else if (strcmp(argv[i], "-h") == 0) {
+      printf(COMO_USAR);
       printf(ARQUIVO_FORMATO);
       exit(1);
+    } else {
+      printf(COMO_USAR);
+      exit(1);
     }
-  } else {
-    prms.id = 1;
   }
+  
+  if (!oki) {
+    prms.id = 1;
+  } else if (prms.id == 0) {
+    printf(COMO_USAR);
+    exit(1);
+  }
+  
   FILE* input_file = fopen(argv[1], "r");
   if (input_file == NULL) {
     printf("%s\n", strerror(errno));
@@ -87,7 +111,6 @@ struct Params parse_argv(int argc, char** argv) {
     printf("Erro ao alocar memória para o vetor y.\n");
     exit(1);
   }
-  int i;
   for (i = 0; i < prms.y_length; i++) {
     scan_ok = fscanf(input_file, "%lf", &prms.y[i]);
     if (scan_ok != 1) {

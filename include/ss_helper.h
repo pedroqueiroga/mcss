@@ -29,7 +29,7 @@ struct SimplePilha {
 void print_arr(int* arr, int start, int arr_length);
 void print_arrd(double* arr, int start, int arr_length);
 void print_pilha(struct SimplePilha* pilha);
-struct Params parse_argv(int argc, char** argv);
+struct Params parse_argv(int argc, char** argv, int* compile);
 struct Params parse_argv2(int argc, char** argv, int* rec);
 void quicksort(double* v, int v_length);
 int stirling_approx(int n);

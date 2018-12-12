@@ -129,12 +129,11 @@ void traverse_tree(struct SimpleVec* sols_vec, struct Params* prms, int id, doub
   }
 }
 
-double traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, double* Y, int* qtd_folhas) {
+double traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, double* Y, int* qtd_folhas, int compile) {
   int i, id = prms->id;
   struct SimplePilha pilha;
   pilha.len = 0; pilha.cap = 1; pilha.vec = malloc(sizeof(struct ElementoPilha));
 
-#ifdef GRAPHTREE
   char filename[100], noext_filename[100];
   int mkdir_status = mkdir("draw", S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH); // rwxr-xr-x
   if (mkdir_status == -1) {
@@ -148,6 +147,7 @@ double traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, double* Y
   pilhatex = fopen(filename, "w");
   if (pilhatex == NULL) {
     printf("nao consegui abrir %s\n  %s", filename, strerror(errno));
+    free(pilha.vec);
     exit(1);
   }
   // escreve o cabecalho do tex:
@@ -163,25 +163,23 @@ double traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, double* Y
           "      inner sep=1pt,\n"                      \
           "      s sep=7mm\n"                           \
           "    }\n");
-#endif
 
   // calculando tempo de execucao do algoritmo
   struct timespec beg = {0,0}, end = {0,0};
   clock_gettime(CLOCK_MONOTONIC, &beg);
-
+  if (id == 0) {
+      printf("wtf\n");
+      fclose(pilhatex);
+      free(pilha.vec);
+      exit(1);
+  }
   do {
 #ifdef DEBUGGING
     printf("id: %d\n", id);
-    if (id == 0) {
-      printf("wtf");
-      fclose(pilhatex);
-      exit(1);
-    }
 #endif
     int pertence = get_all(id, prms, Y);
-#ifdef GRAPHTREE
+
     fprintf(pilhatex, "[%d", id);
-#endif
     
     switch (pertence) {
     case 1:
@@ -203,17 +201,13 @@ double traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, double* Y
         vec_expand(sols_vec);
       }
 
-#ifdef GRAPHTREE
       fprintf(pilhatex, ",fill=teal");
-#endif
     case 2:
       pilha.vec[pilha.len].acc=1;
       pilha.vec[pilha.len++].id=id;
       
-#ifdef GRAPHTREE
       fprintf(pilhatex, ",draw=red]");
-#endif
-
+      
       (*qtd_folhas)++;
       while (pilha.len > 1) {
         i = pilha.len-1;
@@ -221,10 +215,8 @@ double traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, double* Y
           pilha.vec[i-2].acc = pilha.vec[i].acc + pilha.vec[i-1].acc;
           pilha.len -= 2;
 
-#ifdef GRAPHTREE
           fprintf(pilhatex, "]");
-#endif
-
+          
         } else break;
       }
       if (pilha.cap <= pilha.len) {
@@ -247,29 +239,37 @@ double traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, double* Y
   clock_gettime(CLOCK_MONOTONIC, &end);
   double tempo_decorrido = ((double) end.tv_sec + 1.0e-9*end.tv_nsec) - ((double)beg.tv_sec + 1.0e-9*beg.tv_nsec);
   
-#ifdef GRAPHTREE
-  fprintf(pilhatex, "\n\\end{forest}\n" \
+  fprintf(pilhatex,
+          "\n\\end{forest}\n"                   \
           "\\end{document}\n");
   fclose(pilhatex);
-
-  char awk_comm[200];
-  sprintf(awk_comm, \
-          "awk '{sub(/\\[%d/, \"[{%d, %d}\")} 1' %s > tmp && mv tmp %s", \
-          prms->id, prms->id, *qtd_folhas, filename, filename \
-          );
-  int sys_ret = system(awk_comm);
-  if (sys_ret == -1) {
-    printf("nao tem awk? nao foi possivel colocar a qtd de folhas na raiz da arvore.");
+  
+  if (compile) {
+    char awk_comm[200];
+    sprintf(awk_comm,
+            "awk '{sub(/\\[%d/, \"[{%d, %d}\")} 1' "    \
+            "%s > tmp && mv tmp %s",
+            prms->id, prms->id, *qtd_folhas, filename, filename);
+    int sys_ret = system(awk_comm);
+    if (sys_ret == -1) {
+      printf("nao tem awk? nao foi possivel colocar"    \
+             " a qtd de folhas na raiz da arvore.");
+    }
+    
+    char stitch_together[500];
+    sprintf(stitch_together,
+            "cd draw; pdflatex "                        \
+            "-interaction=batchmode %s.tex && "         \
+            "rm %s.aux %s.log && xdg-open %s.pdf "      \
+            ">/dev/null 2>&1 && echo OK!",
+            noext_filename, noext_filename,
+            noext_filename, noext_filename);
+    sys_ret = system(stitch_together);
+    if (sys_ret == -1) {
+      printf("arquivo latex gerado em %s\n", filename);
+    }
   }
-
-  char stitch_together[500];
-  sprintf(stitch_together, "cd draw; pdflatex -interaction=batchmode %s.tex && rm %s.aux && xdg-open %s.pdf >/dev/null 2>&1 && echo OK!", noext_filename, noext_filename, noext_filename);
-  sys_ret = system(stitch_together);
-  if (sys_ret == -1) {
-    printf("arquivo latex gerado em %s\n", filename);
-  }
-#endif
-
+  
   free(pilha.vec);
   return tempo_decorrido;
 }

@@ -4,7 +4,8 @@
 #include "ss_helper.h"
 
 int main(int argc, char** argv) {
-  struct Params prms = parse_argv(argc, argv);
+  int compile = 0;
+  struct Params prms = parse_argv(argc, argv, &compile);
   /*
     int y[] = {90, 92, 93, 97, 99, 103, 104, 108, 111, 112, 115};
     int n = sizeof(y)/sizeof(y[0]);
@@ -21,7 +22,7 @@ int main(int argc, char** argv) {
   
   int qtd_folhas = 0;
 
-  double tempo_decorrido = traverse_tree2(&sols, &prms, Y, &qtd_folhas);
+  double tempo_decorrido = traverse_tree2(&sols, &prms, Y, &qtd_folhas, compile);
 
   printf("\nsolucoes: ");
   print_arr(sols.vec, 0, sols.len);
