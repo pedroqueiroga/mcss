@@ -143,10 +143,16 @@ double traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, double* Y
   sprintf(noext_filename, "tree_id%d_t%d_k%d", id, prms->t, prms->k);
   sprintf(filename, "draw/%s.tex", noext_filename);
   printf("escrevendo em %s\n", filename);
-  FILE *pilhatex;
+  FILE *pilhatex, *aux;
   pilhatex = fopen(filename, "w");
   if (pilhatex == NULL) {
     printf("nao consegui abrir %s\n  %s", filename, strerror(errno));
+    free(pilha.vec);
+    exit(1);
+  }
+  aux = fopen("draw/aux", "w");
+  if (aux == NULL) {
+    printf("nao consegui abrir %s\n  %s", "draw/aux", strerror(errno));
     free(pilha.vec);
     exit(1);
   }
@@ -214,7 +220,9 @@ double traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, double* Y
         if (pilha.vec[i].acc != 0 && pilha.vec[i-1].acc != 0) {
           pilha.vec[i-2].acc = pilha.vec[i].acc + pilha.vec[i-1].acc;
           pilha.len -= 2;
-
+          fprintf(aux, "{%d,%d}\n{%d,%d}\n",
+                  pilha.vec[i].id, pilha.vec[i].acc,
+                  pilha.vec[i-1].id, pilha.vec[i-1].acc);
           fprintf(pilhatex, "]");
           
         } else break;
@@ -238,24 +246,29 @@ double traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, double* Y
   // fim da execucao do algoritmo
   clock_gettime(CLOCK_MONOTONIC, &end);
   double tempo_decorrido = ((double) end.tv_sec + 1.0e-9*end.tv_nsec) - ((double)beg.tv_sec + 1.0e-9*beg.tv_nsec);
+
+  fprintf(aux, "{%d,%d}\n", pilha.vec[0].id, pilha.vec[0].acc);
+  fclose(aux);
   
   fprintf(pilhatex,
           "\n\\end{forest}\n"                   \
           "\\end{document}\n");
   fclose(pilhatex);
+
+  // colocando folhas nos nos
   
+  char awk_comm[200];
+  sprintf(awk_comm,
+          "awk -f leaves.awk "      \
+          "%s > tmp && mv tmp %s && rm draw/aux",
+          filename, filename);
+  int sys_ret = system(awk_comm);
+  if (sys_ret == -1) {
+    printf("nao tem awk? nao foi possivel colocar"      \
+           " a qtd de folhas na raiz da arvore.");
+  }
+
   if (compile) {
-    char awk_comm[200];
-    sprintf(awk_comm,
-            "awk '{sub(/\\[%d/, \"[{%d, %d}\")} 1' "    \
-            "%s > tmp && mv tmp %s",
-            prms->id, prms->id, *qtd_folhas, filename, filename);
-    int sys_ret = system(awk_comm);
-    if (sys_ret == -1) {
-      printf("nao tem awk? nao foi possivel colocar"    \
-             " a qtd de folhas na raiz da arvore.");
-    }
-    
     char stitch_together[500];
     sprintf(stitch_together,
             "cd draw; pdflatex "                        \
