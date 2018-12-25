@@ -37,12 +37,12 @@ int get_all(int id, struct Params* prms, double* Y) {
     m += V[cont];
   }
   int o = prms->y_length - prms->k - m; // # de uns que faltam
-  int a = 0; // soma de uns
+  double a = 0; // soma de uns
   for (cont = V_index; cont < V_index + p; ++cont) {
     // cont - V_index vai encaixar o primeiro de y com o primeiro de V
     a += V[cont]*prms->y[cont-V_index];
   }
-  int d = prms->t-a; // desejado
+  double d = prms->t-a; // desejado
   int int1[2], int2[2];
   int1[0] = p+1; int1[1] = p+o;
   int2[0] = prms->y_length-o+1; int2[1] = prms->y_length;
@@ -68,14 +68,14 @@ int get_all(int id, struct Params* prms, double* Y) {
 
 #ifdef DEBUGGING
   printf("(Y, V, m, o, a, p, ij1, ij2, d, Zij1, Zij2)\n(");
-  print_arr(Y, 0, prms->y_length);
+  print_arrd(Y, 0, prms->y_length);
   printf(", ");
   print_arr(V, V_index, V_index + p);
-  printf(", %d, %d, %d, %d, ", m, o, a, p);
+  printf(", %d, %d, %lf, %d, ", m, o, a, p);
   print_arr(int1, 0, 2);
   printf(", ");
   print_arr(int2, 0, 2);
-  printf(", %d, %d, %d)\n", d, Zij1, Zij2);
+  printf(", %lf, %lf, %lf)\n", d, Zij1, Zij2);
 #endif
 
   free(V);
@@ -184,6 +184,9 @@ double traverse_tree2(struct SimpleVec* sols_vec, struct Params* prms, double* Y
     printf("id: %d\n", id);
 #endif
     int pertence = get_all(id, prms, Y);
+#ifdef DEBUGGING
+    printf("***************\n pertence: %s \n***************\n", pertence_string[pertence]);
+#endif
 
     fprintf(pilhatex, "[%d", id);
     

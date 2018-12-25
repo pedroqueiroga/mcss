@@ -101,7 +101,7 @@ struct Params parse_argv(int argc, char** argv, int* compile) {
   int scan_ok;
   scan_ok = fscanf(input_file, "%d", &prms.y_length);
   if (scan_ok != 1) {
-    printf("Cheque o formato do arquivo providenciado." \
+    printf("Problema ao ler n. Cheque o formato do arquivo providenciado." \
            "\n");
     printf(ARQUIVO_FORMATO);
     exit(1);
@@ -114,7 +114,7 @@ struct Params parse_argv(int argc, char** argv, int* compile) {
   for (i = 0; i < prms.y_length; i++) {
     scan_ok = fscanf(input_file, "%lf", &prms.y[i]);
     if (scan_ok != 1) {
-      printf("Cheque o formato do arquivo providenciado.");
+      printf("Problema ao ler y. Cheque o formato do arquivo providenciado.\n");
       printf(ARQUIVO_FORMATO);
       exit(1);
     }
@@ -123,14 +123,14 @@ struct Params parse_argv(int argc, char** argv, int* compile) {
   printf("\n");
   scan_ok = fscanf(input_file, "%d", &prms.t);
   if (scan_ok != 1) {
-    printf("Cheque o formato do arquivo providenciado.");
+    printf("Problema ao ler t. Cheque o formato do arquivo providenciado.\n");
     printf(ARQUIVO_FORMATO);
     exit(1);
   }
 
   scan_ok = fscanf(input_file, "%d", &prms.k);
   if (scan_ok != 1) {
-    printf("Cheque o formato do arquivo providenciado.");
+    printf("Problema ao ler k. Cheque o formato do arquivo providenciado.\n");
     printf(ARQUIVO_FORMATO);
     exit(1);
   }
@@ -198,7 +198,8 @@ struct Params parse_argv2(int argc, char** argv, int* rec) {
 }
 
 int mycompare(const void* a, const void* b) {
-  return ((* (double*) a) - (* (double*) b));
+  double subtraction = ((* (double*) a) - (* (double*) b));
+  return subtraction < 0 ? -1 : subtraction > 0 ? 1 : 0;
 }
 
 void quicksort(double* v, int v_length) {
@@ -250,18 +251,21 @@ void pilha_expand(struct SimplePilha* sp) {
 }
 
 int nearlyEqual(double a, double b) {
+  double e = 1e-10;
   double A = fabs(a);
   double B = fabs(b);
   double diff = fabs(a - b);
-
+#ifdef DEBUGGING
+  printf("%e, %e, %e, %e\nhehe\n",A,B,diff, DBL_MIN);
+#endif
   if (a == b) { // shortcut, handles infinities
     return 1;
   } else if (a == 0 || b == 0 || diff < DBL_MIN) {
     // a or b is zero or both are extremely close to it
     // relative error is less meaningful here
-    return diff < (DBL_EPSILON * DBL_MIN);
+    return diff < (e * DBL_MIN);
   } else { // use relative error
-    return diff / min((A + B), DBL_MAX) < DBL_EPSILON;
+    return (diff / min((A + B), DBL_MAX)) < e;
   }
 }
 
